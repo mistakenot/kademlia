@@ -19,28 +19,29 @@ namespace Kademlia.Test
         [ExpectedException(typeof(ArgumentException))]
         public void Keys_are_160_bits_fails_when_wrong()
         {
-            new Key(new byte[19]);
+            var bytes = Enumerable.Repeat(byte.MaxValue, 21);
+            var val = new Key(bytes);
         }
 
         [TestMethod]
         public void Keys_are_160_bits_succeeds_when_correct()
         {
-            new Key(new byte[20]);
+            new Key(new BigInteger(int.MaxValue));
         }
 
         [TestMethod]
         public void Keys_are_comparable()
         {
-            var keyA = new Key();
-            var keyB = new Key();
+            var keyA = new Key(new BigInteger(0));
+            var keyB = new Key(new BigInteger(0));
             Assert.IsTrue(keyA.Equals(keyB));
         }
 
         [TestMethod]
         public void Keys_have_xnor_distance_when_zero()
         {
-            var keyA = new Key();
-            var keyB = new Key();
+            var keyA = new Key(new BigInteger(0));
+            var keyB = new Key(new BigInteger(0));
             var actual = keyA.DistanceTo(keyB);
             var expected = new BigInteger(new byte[160]);
 
@@ -50,22 +51,14 @@ namespace Kademlia.Test
         [TestMethod]
         public void Keys_have_xor_distance_when_not_zero()
         {
-            var zero = Enumerable.Repeat((byte)0x00, 19);
+            var x = new BigInteger(12341234);
+            var y = new BigInteger(23452345);
 
-            var valA = new[] { (byte)0x00 }
-                .Concat(zero)
-                .ToArray();
-                
-            var keyA = new Key(valA);
+            var keyA = new Key(x);
+            var keyB = new Key(y);
 
-            var valB = new[] { (byte)0x01 }
-                .Concat(zero)
-                .ToArray();
-
-            var keyB = new Key(valB);
-
-            Assert.AreEqual(new BigInteger(1), keyA.DistanceTo(keyB));
-            Assert.AreEqual(new BigInteger(1), keyB.DistanceTo(keyA));
+            Assert.AreEqual(x ^ y, keyA.DistanceTo(keyB));
+            Assert.AreEqual(x ^ y, keyB.DistanceTo(keyA));
         }
     }
 }

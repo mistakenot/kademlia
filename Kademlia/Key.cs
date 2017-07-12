@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -6,38 +8,42 @@ namespace Kademlia
 {
     public class Key : IEquatable<Key>
     {
-        private readonly byte[] _bytes;
+        private readonly BigInteger _value;
 
-        public Key()
-            : this(new byte[20])
+        public Key(IEnumerable<byte> bytes)
+            : this(new BigInteger(bytes.Concat(new[] { byte.MinValue }).ToArray()))
         {
 
         }
 
-        public Key(byte[] bytes)
+        public Key(BigInteger value)
         {
-            if (bytes.Length != 20)
+            if (value > MaxIntValue)
             {
-                throw new ArgumentException($"{nameof(bytes)} must have length of 20.");
+                throw new ArgumentException("Value is too large.");
             }
 
-            _bytes = bytes;
+            _value = value;
         }
 
         public bool Equals(Key other)
         {
-            return this._bytes.Length == other._bytes.Length 
-                && this._bytes.SequenceEqual(other._bytes);
+            return _value.Equals(other._value);
         }
 
         public BigInteger DistanceTo(Key other)
         {
-            var value = this._bytes.Zip(other._bytes, (a, b) => (byte)(a ^ b));
-            return new BigInteger(value.ToArray());
+            return this._value ^ other._value;
         }
 
-        public static readonly Key MaxValue = new Key(Enumerable.Repeat((byte)0x88, 20).ToArray());
+        public static readonly Key MaxValue = new Key(MaxIntValue);
+        static readonly BigInteger MaxIntValue = new BigInteger(
+            Enumerable
+                .Repeat(byte.MaxValue, 20)
+                .Concat(new[] { byte.MinValue })
+                .ToArray());
 
-        public static readonly Key MinValue = new Key(Enumerable.Repeat((byte)0x00, 20).ToArray());
+        public static readonly Key MinValue = new Key(new BigInteger(0));
+        static readonly BigInteger MinIntValue = new BigInteger(0);
     }
 }
